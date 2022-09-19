@@ -8,7 +8,7 @@ def get_config():
   # wandb
   config.wandb = wandb = ml_collections.ConfigDict()
   wandb.entity = None # team
-  wandb.project = "ddpm-flax"
+  wandb.project = "ddpm-flax-fashion-mnist"
   wandb.job_type = "training"
   wandb.name = None 
   wandb.log_train = True
