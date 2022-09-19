@@ -416,10 +416,6 @@ def train(config: ml_collections.ConfigDict,
       
       # Save a checkpoint periodically and generate samples.
       if (step + 1) % config.training.save_and_sample_every == 0 or step + 1 == num_steps:
-          save_checkpoint(state, workdir)
-          if step + 1 == num_steps and config.wandb.log_model:
-              utils.wandb_log_model(workdir, step)
-
           # generate and save sampling 
           logging.info(f'generating samples....')
           samples = []
@@ -435,7 +431,12 @@ def train(config: ml_collections.ConfigDict,
               os.path.join(this_sample_dir, "sample.png"), "wb") as fout:
             samples_array = utils.save_image(samples, config.training.num_sample, fout, padding=2)
             if config.wandb.log_sample:
-                utils.wandb_log_image(samples_array, step)
+                utils.wandb_log_image(samples_array, step+1)
+          # save the chceckpoint
+          save_checkpoint(state, workdir)
+          if step + 1 == num_steps and config.wandb.log_model:
+              utils.wandb_log_model(workdir, step)
+
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.PRNGKey(0), ()).block_until_ready()
 
