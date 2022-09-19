@@ -433,7 +433,7 @@ def train(config: ml_collections.ConfigDict,
           
           with tf.io.gfile.GFile(
               os.path.join(this_sample_dir, "sample.png"), "wb") as fout:
-            samples_array = utils.save_image(samples, fout, padding=2)
+            samples_array = utils.save_image(samples, config.training.num_sample, fout, padding=2)
             if config.wandb.log_sample:
                 utils.wandb_log_image(samples_array, step)
   # Wait until computations are done before exiting
