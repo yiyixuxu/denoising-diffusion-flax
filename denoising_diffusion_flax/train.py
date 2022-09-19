@@ -336,7 +336,7 @@ def train(config: ml_collections.ConfigDict,
             job_type=config.wandb.job_type,
             config=config)
       # set default x-axis as 'train/step'
-      wandb.define_metric("*", step_metric="train/step")
+      #wandb.define_metric("*", step_metric="train/step")
 
   sample_dir = os.path.join(workdir, "samples")
 
@@ -425,10 +425,10 @@ def train(config: ml_collections.ConfigDict,
           
           this_sample_dir = os.path.join(sample_dir, f"iter_{step}_host_{jax.process_index()}")
           tf.io.gfile.makedirs(this_sample_dir)
-
+          
           with tf.io.gfile.GFile(
               os.path.join(this_sample_dir, "sample.png"), "wb") as fout:
-            utils.save_image(samples, fout, padding=2)
+            utils.save_image(samples, fout, padding=2, log_wandb=config.wandb.log_sample)
 
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.PRNGKey(0), ()).block_until_ready()

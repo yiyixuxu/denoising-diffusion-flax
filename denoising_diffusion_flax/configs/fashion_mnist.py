@@ -12,6 +12,7 @@ def get_config():
   wandb.job_type = "training"
   wandb.name = None 
   wandb.log_train = True
+  wandb.log_sample = True
   
 
   # training

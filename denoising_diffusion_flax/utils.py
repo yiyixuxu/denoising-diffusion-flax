@@ -4,6 +4,7 @@ import numpy as np
 import jax 
 import math
 from PIL import Image
+import wandb
 
 
 
@@ -96,7 +97,7 @@ def make_grid(samples, padding=2, pad_value=0.0):
   return grid
 
 
-def save_image(samples, fp, padding=2, pad_value=0.0, format=None):
+def save_image(samples, fp, padding=2, pad_value=0.0, format=None, log_wandb=False):
   """Make a grid of images and Save it into an image file.
 
   Args:
@@ -115,5 +116,7 @@ def save_image(samples, fp, padding=2, pad_value=0.0, format=None):
   # Add 0.5 after unnormalizing to [0, 255] to round to nearest integer
   ndarr = jnp.clip(grid * 255.0 + 0.5, 0, 255).astype(jnp.uint8)
   im = Image.fromarray(np.array(ndarr))
+  if log_wandb:
+    wandb.log({'samples': wandb.Image(im)})
   im.save(fp, format=format)
 
