@@ -435,7 +435,7 @@ def train(config: ml_collections.ConfigDict,
           # save the chceckpoint
           save_checkpoint(state, workdir)
           if step + 1 == num_steps and config.wandb.log_model:
-              utils.wandb_log_model(workdir, step)
+              utils.wandb_log_model(workdir, step+1)
 
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.PRNGKey(0), ()).block_until_ready()

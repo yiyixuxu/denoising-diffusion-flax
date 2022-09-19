@@ -7,24 +7,28 @@ def get_config():
 
   # wandb
   config.wandb = wandb = ml_collections.ConfigDict()
-  wandb.entity = None # team
-  wandb.project = "ddpm-flax-fashion-mnist"
+  wandb.entity = None
+  wandb.project = "ddpm-flax-cifar10"
   wandb.job_type = "training"
   wandb.name = None 
   wandb.log_train = True
-  wandb.log_sample = True
-  wandb.log_model = True
+  wandb.log_sample = False
   
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  training.num_train_steps = 12000
+  training.num_train_steps = 700000
   training.log_every_steps = 100
   training.loss_type = 'l1'
   training.half_precision = False
   training.save_and_sample_every = 1000
-  training.num_sample = 64
+  training.num_sample = 36
 
+
+  # sampling 
+  config.sampling = sampling = ml_collections.ConfigDict()
+  sampling.num_sample = 36
+  
 
   # ema
   config.ema = ema = ml_collections.ConfigDict()
@@ -38,7 +42,7 @@ def get_config():
 
   # ddpm 
   config.ddpm = ddpm = ml_collections.ConfigDict()
-  ddpm.beta_schedule = 'linear'
+  ddpm.beta_schedule = 'cosine'
   ddpm.timesteps = 1000
   ddpm.p2_loss_weight_gamma = 0. # p2 loss weight, from https://arxiv.org/abs/2204.00227 - 0 is equivalent to weight of 1 across time - 1. is recommended
   ddpm.p2_loss_weight_k = 1
@@ -46,17 +50,17 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.dataset = 'fashion_mnist'
+  data.dataset ='cifar10'
   data.batch_size = 128 * 8
   data.cache = False
-  data.image_size = 28
-  data.channels = 1
+  data.image_size = 32
+  data.channels = 3
 
 
   # model
   config.model = model = ml_collections.ConfigDict()
   model.dim = 64
-  model.dim_mults = (1, 2, 4)
+  model.dim_mults = (1, 2, 4, 8)
 
 
   # optim
