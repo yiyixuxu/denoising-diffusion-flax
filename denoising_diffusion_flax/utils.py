@@ -97,7 +97,7 @@ def make_grid(samples, padding=2, pad_value=0.0):
   return grid
 
 
-def save_image(samples, fp, padding=2, pad_value=0.0, format=None, log_wandb=False):
+def save_image(samples, fp, padding=2, pad_value=0.0, format=None):
   """Make a grid of images and Save it into an image file.
 
   Args:
@@ -115,8 +115,21 @@ def save_image(samples, fp, padding=2, pad_value=0.0, format=None, log_wandb=Fal
   grid = make_grid(samples, padding, pad_value)
   # Add 0.5 after unnormalizing to [0, 255] to round to nearest integer
   ndarr = jnp.clip(grid * 255.0 + 0.5, 0, 255).astype(jnp.uint8)
-  im = Image.fromarray(np.array(ndarr))
-  if log_wandb:
-    wandb.log({'samples': wandb.Image(im)})
+  ndarr = np.array(ndarr)
+  im = Image.fromarray(ndarr)
   im.save(fp, format=format)
+
+  return ndarr
+
+def wandb_log_image(samples_array, step):
+    sample_images = wandb.Image(samples_array, caption = f"step {step}")
+    wandb.log({'samples':sample_images })
+
+def wandb_log_model(workdir, step):
+  artifact = wandb.Artifact(
+                    name=f"model-{wandb.run.id}",
+                    type="ddpm_model")
+  artifact.add_file( f"{workdir} /checkpoint_{step}")
+  wandb.run.log_artifact(artifact)
+
 

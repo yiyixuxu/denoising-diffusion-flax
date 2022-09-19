@@ -306,12 +306,14 @@ def restore_checkpoint(state, workdir):
   return checkpoints.restore_checkpoint(workdir, state)
 
 
-def save_checkpoint(state, workdir):
+def save_checkpoint(state, workdir, log_wandb=False):
   if jax.process_index() == 0:
     # get train state from the first replica
     state = jax.device_get(jax.tree_map(lambda x: x[0], state))
     step = int(state.step)
     checkpoints.save_checkpoint(workdir, state, step, keep=3)
+
+
 
 
 def train(config: ml_collections.ConfigDict, 
@@ -415,6 +417,9 @@ def train(config: ml_collections.ConfigDict,
       # Save a checkpoint periodically and generate samples.
       if (step + 1) % config.training.save_and_sample_every == 0 or step + 1 == num_steps:
           save_checkpoint(state, workdir)
+          if step + 1 == num_steps and wandb.log_model:
+              utils.wandb_log_model(workdir, step)
+
           # generate and save sampling 
           logging.info(f'generating samples....')
           samples = []
@@ -428,8 +433,9 @@ def train(config: ml_collections.ConfigDict,
           
           with tf.io.gfile.GFile(
               os.path.join(this_sample_dir, "sample.png"), "wb") as fout:
-            utils.save_image(samples, fout, padding=2, log_wandb=config.wandb.log_sample)
-
+            samples_array = utils.save_image(samples, fout, padding=2)
+            if config.wandb.log_sample:
+                utils.wandb_log_image(samples_array, step)
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.PRNGKey(0), ()).block_until_ready()
 
