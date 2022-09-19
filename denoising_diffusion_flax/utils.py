@@ -129,7 +129,7 @@ def wandb_log_model(workdir, step):
   artifact = wandb.Artifact(
                     name=f"model-{wandb.run.id}",
                     type="ddpm_model")
-  artifact.add_file( f"{workdir} /checkpoint_{step}")
+  artifact.add_file( f"{workdir}/checkpoint_{step}")
   wandb.run.log_artifact(artifact)
 
 
