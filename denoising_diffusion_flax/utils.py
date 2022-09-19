@@ -60,9 +60,9 @@ def get_ddpm_params(config):
 
     
 
-def make_grid(samples, padding=2, pad_value=0.0):
+def make_grid(samples, n_samples, padding=2, pad_value=0.0):
 
-  ndarray = samples.reshape((-1, *samples.shape[2:]))
+  ndarray = samples.reshape((-1, *samples.shape[2:]))[:n_samples]
   nrow = int(np.sqrt(ndarray.shape[0]))
 
   if not (isinstance(ndarray, jnp.ndarray) or
@@ -97,7 +97,7 @@ def make_grid(samples, padding=2, pad_value=0.0):
   return grid
 
 
-def save_image(samples, fp, padding=2, pad_value=0.0, format=None):
+def save_image(samples, n_samples, fp, padding=2, pad_value=0.0, format=None):
   """Make a grid of images and Save it into an image file.
 
   Args:
@@ -112,7 +112,7 @@ def save_image(samples, fp, padding=2, pad_value=0.0, format=None):
       parameter should always be used.
   """
 
-  grid = make_grid(samples, padding, pad_value)
+  grid = make_grid(samples, n_samples, padding, pad_value)
   # Add 0.5 after unnormalizing to [0, 255] to round to nearest integer
   ndarr = jnp.clip(grid * 255.0 + 0.5, 0, 255).astype(jnp.uint8)
   ndarr = np.array(ndarr)

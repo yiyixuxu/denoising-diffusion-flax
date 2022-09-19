@@ -13,11 +13,12 @@ def get_config():
   wandb.name = None 
   wandb.log_train = True
   wandb.log_sample = True
+  wandb.log_model = True
   
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  training.num_train_steps = 70000
+  training.num_train_steps = 5000
   training.log_every_steps = 100
   training.loss_type = 'l1'
   training.half_precision = False
