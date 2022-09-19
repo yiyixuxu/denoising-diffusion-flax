@@ -417,7 +417,7 @@ def train(config: ml_collections.ConfigDict,
       # Save a checkpoint periodically and generate samples.
       if (step + 1) % config.training.save_and_sample_every == 0 or step + 1 == num_steps:
           save_checkpoint(state, workdir)
-          if step + 1 == num_steps and wandb.log_model:
+          if step + 1 == num_steps and config.wandb.log_model:
               utils.wandb_log_model(workdir, step)
 
           # generate and save sampling 
