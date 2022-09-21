@@ -158,12 +158,12 @@ def create_train_state(rng, config: ml_collections.ConfigDict):
       model_cls=unet.Unet, 
       half_precision=config.training.half_precision,
       dim = config.model.dim, 
-      out_dim =  config.data.channels if config.ddpm.self_condition else None,
+      out_dim =  config.data.channels,
       dim_mults = config.model.dim_mults)
   
   rng, rng_params = jax.random.split(rng)
   image_size = config.data.image_size
-  input_dim = config.data.channels * 2 if config.ddpm.self_condition else config.data.channel
+  input_dim = config.data.channels * 2 if config.ddpm.self_condition else config.data.channels
   params = initialized(rng_params, image_size, input_dim, model)
 
   tx = create_optimizer(config.optim)
@@ -253,8 +253,8 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_a
         def estimate_x0(x_t, t):
             zeros = jnp.zeros_like(x_t)
             noise_pred = state.apply_fn({'params':state.params}, jnp.concatenate([x_t, zeros], axis=-1), t)
-            x0 = 1. / ddpm_params['sqrt_alphas_bar'][t, None, None,None] * x_t -  jnp.sqrt(1./ddpm_params['alphas_bar'][t, None, None, None]-1) * noise_pred
-            return x0
+            x0_pred = 1. / ddpm_params['sqrt_alphas_bar'][t, None, None,None] * x_t -  jnp.sqrt(1./ddpm_params['alphas_bar'][t, None, None, None]-1) * noise_pred
+            return x0_pred
 
         x0 = jax.lax.cond(
             jax.random.uniform(condition_rng, shape=(1,))[0] < 0.5,
