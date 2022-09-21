@@ -306,10 +306,10 @@ class Unet(nn.Module):
     dtype: Any = jnp.float32
 
 
-
     @nn.compact
     def __call__(self, x, time):
         B, H, W, C = x.shape
+
         init_dim = self.dim if self.init_dim is None else self.init_dim
         hs = []
         h = nn.Conv(

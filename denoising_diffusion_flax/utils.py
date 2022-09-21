@@ -7,7 +7,6 @@ from PIL import Image
 import wandb
 
 
-
 def cosine_beta_schedule(timesteps):
     """Return cosine schedule 
     as proposed in https://arxiv.org/abs/2102.09672 """
@@ -58,7 +57,7 @@ def get_ddpm_params(config):
       'p2_loss_weight': p2_loss_weight
   }
 
-    
+
 
 def make_grid(samples, n_samples, padding=2, pad_value=0.0):
 

@@ -131,10 +131,51 @@ def initialized(key, image_size,image_channel, model):
     return model.init(*args)
   variables = init(
       {'params': key}, 
-      jnp.ones(input_shape, model.dtype), 
-      jnp.ones(input_shape[:1], model.dtype))
+      jnp.ones(input_shape, model.dtype), # x noisy image
+      jnp.ones(input_shape[:1], model.dtype) # t
+      )
 
   return variables['params']
+
+
+class TrainState(train_state.TrainState):
+  params_ema: Any = None
+  dynamic_scale: Optional[dynamic_scale_lib.DynamicScale] = None
+
+
+def create_train_state(rng, config: ml_collections.ConfigDict):
+  """Creates initial `TrainState`."""
+
+  dynamic_scale = None
+  platform = jax.local_devices()[0].platform
+
+  if config.training.half_precision and platform == 'gpu':
+    dynamic_scale = dynamic_scale_lib.DynamicScale()
+  else:
+    dynamic_scale = None
+
+  model = create_model(
+      model_cls=unet.Unet, 
+      half_precision=config.training.half_precision,
+      dim = config.model.dim, 
+      out_dim =  config.data.channels if config.ddpm.self_condition else None,
+      dim_mults = config.model.dim_mults)
+  
+  rng, rng_params = jax.random.split(rng)
+  image_size = config.data.image_size
+  input_dim = config.data.channels * 2 if config.ddpm.self_condition else config.data.channel
+  params = initialized(rng_params, image_size, input_dim, model)
+
+  tx = create_optimizer(config.optim)
+
+  state = TrainState.create(
+      apply_fn=model.apply, 
+      params=params, 
+      tx=tx, 
+      params_ema=params,
+      dynamic_scale=dynamic_scale)
+
+  return state
 
 
 def create_optimizer(config):
@@ -184,7 +225,7 @@ def q_sample(x, t, noise, ddpm_params):
 
 
 # train step
-def p_loss(rng, state, batch, ddpm_params, loss_fn, pmap_axis='batch'):
+def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_axis='batch'):
     
     # run the forward diffusion process to generate noisy image x_t at timestep t
     x = batch['image']
@@ -195,15 +236,36 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, pmap_axis='batch'):
     rng, t_rng = jax.random.split(rng)
     t = jax.random.randint(t_rng, shape=(B,), dtype = jnp.int32, minval=0, maxval= len(ddpm_params['betas']))
    
-    # sample a noise (target for the denoise model)
+    # sample a noise (input for q_sample, also target for denoise model)
     rng, noise_rng = jax.random.split(rng)
     noise = jax.random.normal(noise_rng, x.shape)
     
     # generate the noisy image (input for denoise model)
     x_t = q_sample(x, t, noise, ddpm_params)
-
-    p2_loss_weight = ddpm_params['p2_loss_weight']
     
+    # if doing self-conditioning, 50% of the time first estimate x_0 = f(x_t, 0, t) and then use the estimated x_0 for Self-Conditioning
+    # we don't backpropagate through the estimated x_0 (exclude from the loss calculation)
+    # this technique will slow down training by 25%, but seems to lower FID significantly  
+    if self_condition:
+
+        rng, condition_rng = jax.random.split(rng)
+        # self-conditioning 
+        def estimate_x0(x_t, t):
+            zeros = jnp.zeros_like(x_t)
+            noise_pred = state.apply_fn({'params':state.params}, jnp.concatenate([x_t, zeros], axis=-1), t)
+            x0 = 1. / ddpm_params['sqrt_alphas_bar'][t, None, None,None] * x_t -  jnp.sqrt(1./ddpm_params['alphas_bar'][t, None, None, None]-1) * noise_pred
+            return x0
+
+        x0 = jax.lax.cond(
+            jax.random.uniform(condition_rng, shape=(1,))[0] < 0.5,
+            estimate_x0,
+            lambda x_t, _ :jnp.zeros_like(x_t),
+            x_t,t)
+                
+        x_t = jnp.concatenate([x_t, x0], axis=-1)
+    
+    p2_loss_weight = ddpm_params['p2_loss_weight']
+
     def compute_loss(params):
         noise_pred = state.apply_fn({'params':params}, x_t, t)
         loss = loss_fn(flatten(noise_pred),flatten(noise))
@@ -262,45 +324,6 @@ def apply_ema_decay(state, ema_decay):
     state = state.replace(params_ema = params_ema)
     return state
 
- 
-class TrainState(train_state.TrainState):
-  params_ema: Any = None
-  dynamic_scale: Optional[dynamic_scale_lib.DynamicScale] = None
-
-
-def create_train_state(rng, config: ml_collections.ConfigDict):
-  """Creates initial `TrainState`."""
-
-  dynamic_scale = None
-  platform = jax.local_devices()[0].platform
-
-  if config.training.half_precision and platform == 'gpu':
-    dynamic_scale = dynamic_scale_lib.DynamicScale()
-  else:
-    dynamic_scale = None
-
-  model = create_model(
-      model_cls=unet.Unet, 
-      half_precision=config.training.half_precision,
-      dim = config.model.dim, 
-      dim_mults = config.model.dim_mults)
-  
-  rng, rng_params = jax.random.split(rng)
-  image_size = config.data.image_size
-  image_channel = config.data.channels
-  params = initialized(rng_params, image_size, image_channel, model)
-
-  tx = create_optimizer(config.optim)
-
-  state = TrainState.create(
-      apply_fn=model.apply, 
-      params=params, 
-      tx=tx, 
-      params_ema=params,
-      dynamic_scale=dynamic_scale)
-
-  return state
-
 
 def restore_checkpoint(state, workdir):
   return checkpoints.restore_checkpoint(workdir, state)
@@ -312,8 +335,6 @@ def save_checkpoint(state, workdir, log_wandb=False):
     state = jax.device_get(jax.tree_map(lambda x: x[0], state))
     step = int(state.step)
     checkpoints.save_checkpoint(workdir, state, step, keep=3)
-
-
 
 
 def train(config: ml_collections.ConfigDict, 
@@ -360,7 +381,7 @@ def train(config: ml_collections.ConfigDict,
  
   ddpm_params = utils.get_ddpm_params(config.ddpm)
   ema_decay_fn = create_ema_decay_schedule(config.ema)
-  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn,  pmap_axis ='batch')
+  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn, self_condition=config.ddpm.self_condition, pmap_axis ='batch')
   p_train_step = jax.pmap(train_step, axis_name = 'batch')
   p_apply_ema = jax.pmap(apply_ema_decay, in_axes=(0, None), axis_name = 'batch')
   p_copy_params_to_ema = jax.pmap(copy_params_to_ema, axis_name='batch')
@@ -368,7 +389,7 @@ def train(config: ml_collections.ConfigDict,
   train_metrics = []
   hooks = []
 
-  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params)
+  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params,self_condition=config.ddpm.self_condition)
   p_sample_step = jax.pmap(sample_step, axis_name='batch')
 
   if jax.process_index() == 0:
