@@ -31,7 +31,7 @@ import wandb
 
 import unet
 import utils
-from sampling import sample_loop, ddpm_sample_step
+from sampling import sample_loop, ddpm_sample_step, model_predict
 
 
 def flatten(x):
@@ -217,15 +217,15 @@ def create_ema_decay_schedule(config):
 
 def q_sample(x, t, noise, ddpm_params):
 
-    sqrt_alphas_bar = ddpm_params['sqrt_alphas_bar']
-    sqrt_1m_alphas_bar = ddpm_params['sqrt_1m_alphas_bar']
-    x_t = sqrt_alphas_bar[t, None, None, None] * x + sqrt_1m_alphas_bar[t,None,None,None] * noise
+    sqrt_alpha_bar = ddpm_params['sqrt_alphas_bar'][t, None, None, None]
+    sqrt_1m_alpha_bar = ddpm_params['sqrt_1m_alphas_bar'][t,None,None,None]
+    x_t = sqrt_alpha_bar * x + sqrt_1m_alpha_bar * noise
 
     return x_t
 
 
 # train step
-def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_axis='batch'):
+def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x0=False, pmap_axis='batch'):
     
     # run the forward diffusion process to generate noisy image x_t at timestep t
     x = batch['image']
@@ -234,14 +234,16 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_a
     # create batched timesteps: t with shape (B,)
     B, H, W, C = x.shape
     rng, t_rng = jax.random.split(rng)
-    t = jax.random.randint(t_rng, shape=(B,), dtype = jnp.int32, minval=0, maxval= len(ddpm_params['betas']))
+    batched_t = jax.random.randint(t_rng, shape=(B,), dtype = jnp.int32, minval=0, maxval= len(ddpm_params['betas']))
    
-    # sample a noise (input for q_sample, also target for denoise model)
+    # sample a noise (input for q_sample)
     rng, noise_rng = jax.random.split(rng)
     noise = jax.random.normal(noise_rng, x.shape)
-    
+    # if pred_x0 == True, the target for loss calculation is x, else noise
+    target = x if pred_x0 else noise
+
     # generate the noisy image (input for denoise model)
-    x_t = q_sample(x, t, noise, ddpm_params)
+    x_t = q_sample(x, batched_t, noise, ddpm_params)
     
     # if doing self-conditioning, 50% of the time first estimate x_0 = f(x_t, 0, t) and then use the estimated x_0 for Self-Conditioning
     # we don't backpropagate through the estimated x_0 (exclude from the loss calculation)
@@ -249,29 +251,30 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_a
     if self_condition:
 
         rng, condition_rng = jax.random.split(rng)
+        zeros = jnp.zeros_like(x_t)
+
         # self-conditioning 
-        def estimate_x0(x_t, t):
-            zeros = jnp.zeros_like(x_t)
-            noise_pred = state.apply_fn({'params':state.params}, jnp.concatenate([x_t, zeros], axis=-1), t)
-            x0_pred = 1. / ddpm_params['sqrt_alphas_bar'][t, None, None,None] * x_t -  jnp.sqrt(1./ddpm_params['alphas_bar'][t, None, None, None]-1) * noise_pred
-            return x0_pred
+        def estimate_x0(_):
+            jnp.concatenate([x_t, zeros])
+            x0, _ = model_predict(state, x_t, batched_t, ddpm_params, pred_x0, use_ema=False)
+            return x0
 
         x0 = jax.lax.cond(
             jax.random.uniform(condition_rng, shape=(1,))[0] < 0.5,
             estimate_x0,
-            lambda x_t, _ :jnp.zeros_like(x_t),
-            x_t,t)
+            lambda _ :zeros,
+            None)
                 
         x_t = jnp.concatenate([x_t, x0], axis=-1)
     
     p2_loss_weight = ddpm_params['p2_loss_weight']
 
     def compute_loss(params):
-        noise_pred = state.apply_fn({'params':params}, x_t, t)
-        loss = loss_fn(flatten(noise_pred),flatten(noise))
+        pred = state.apply_fn({'params':params}, x_t, batched_t)
+        loss = loss_fn(flatten(pred),flatten(target))
         loss = jnp.mean(loss, axis= 1)
         assert loss.shape == (B,)
-        loss = loss * p2_loss_weight[t]
+        loss = loss * p2_loss_weight[batched_t]
         return loss.mean()
     
     dynamic_scale = state.dynamic_scale
@@ -314,7 +317,6 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pmap_a
 
 
 
-
 def copy_params_to_ema(state):
    state = state.replace(params_ema = state.params)
    return state
@@ -329,7 +331,7 @@ def restore_checkpoint(state, workdir):
   return checkpoints.restore_checkpoint(workdir, state)
 
 
-def save_checkpoint(state, workdir, log_wandb=False):
+def save_checkpoint(state, workdir):
   if jax.process_index() == 0:
     # get train state from the first replica
     state = jax.device_get(jax.tree_map(lambda x: x[0], state))
@@ -382,7 +384,7 @@ def train(config: ml_collections.ConfigDict,
  
   ddpm_params = utils.get_ddpm_params(config.ddpm)
   ema_decay_fn = create_ema_decay_schedule(config.ema)
-  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn, self_condition=config.ddpm.self_condition, pmap_axis ='batch')
+  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn, self_condition=config.ddpm.self_condition, pred_x0=config.ddpm.pred_x0, pmap_axis ='batch')
   p_train_step = jax.pmap(train_step, axis_name = 'batch')
   p_apply_ema = jax.pmap(apply_ema_decay, in_axes=(0, None), axis_name = 'batch')
   p_copy_params_to_ema = jax.pmap(copy_params_to_ema, axis_name='batch')
@@ -390,7 +392,7 @@ def train(config: ml_collections.ConfigDict,
   train_metrics = []
   hooks = []
 
-  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params,self_condition=config.ddpm.self_condition)
+  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params, self_condition=config.ddpm.self_condition, pred_x0=config.ddpm.pred_x0)
   p_sample_step = jax.pmap(sample_step, axis_name='batch')
 
   if jax.process_index() == 0:

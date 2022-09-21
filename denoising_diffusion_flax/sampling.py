@@ -2,55 +2,85 @@ import jax.numpy as jnp
 import jax 
 from flax import jax_utils
 
+
 def unnormalize_to_zero_to_one(t):
     return (t + 1) * 0.5
 
-def get_posterior_mean_variance(img, t, pred_noise, ddpm_params):
 
-    betas = ddpm_params['betas']
-    alphas = ddpm_params['alphas']
-    alphas_bar = ddpm_params['alphas_bar']
-    sqrt_alphas_bar = ddpm_params['sqrt_alphas_bar']
+def noise_to_x0(noise, xt, batched_t, ddpm):
+    assert batched_t.shape[0] == xt.shape[0] == noise.shape[0] # make sure all has batch dimension
+    sqrt_alpha_bar = ddpm['sqrt_alphas_bar'][batched_t, None, None, None]
+    alpha_bar= ddpm['alphas_bar'][batched_t, None, None, None]
+    x0 = 1. / sqrt_alpha_bar * xt -  jnp.sqrt(1./alpha_bar-1) * noise
+    return x0
 
-    # calculate x_0 (needed for self-condition calculation)
-    x0 = 1. / sqrt_alphas_bar[t] * img -  jnp.sqrt(1./alphas_bar[t]-1) * pred_noise
-    x0 = jnp.clip(x0, -1., 1.)
-    
+
+def x0_to_noise(x0, xt, batched_t, ddpm):
+    assert batched_t.shape[0] == xt.shape[0] == noise.shape[0] # make sure all has batch dimension
+    sqrt_alpha_bar = ddpm['sqrt_alphas_bar'][batched_t, None, None, None]
+    alpha_bar= ddpm['alphas_bar'][batched_t, None, None, None]
+    noise = (1. / sqrt_alpha_bar * xt - x0) /jnp.sqrt(1./alpha_bar-1)
+    return noise
+
+
+def get_posterior_mean_variance(img, t, x0, v, ddpm_params):
+
+    beta = ddpm_params['betas'][t, None,None,None]
+    alpha = ddpm_params['alphas'][t, None,None,None]
+    alpha_bar = ddpm_params['alphas_bar'][t, None,None,None]
+    alpha_bar_last = ddpm_params['alphas_bar'][t-1, None,None,None]
+    sqrt_alpha_bar_last = ddpm_params['sqrt_alphas_bar'][t-1, None,None,None]
+
     # only needed when t > 0
-    coef_x0 = betas[t] * sqrt_alphas_bar[t-1] / (1. - alphas_bar[t])
-    coef_xt = (1. - alphas_bar[t-1]) * jnp.sqrt(alphas[t]) / ( 1- alphas_bar[t])        
+    coef_x0 = beta * sqrt_alpha_bar_last / (1. - alpha_bar)
+    coef_xt = (1. - alpha_bar_last) * jnp.sqrt(alpha) / ( 1- alpha_bar)        
     posterior_mean = coef_x0 * x0 + coef_xt * img
         
-    posterior_variance = betas[t] * (1 - alphas_bar[t-1]) / (1. - alphas_bar[t])
+    posterior_variance = beta * (1 - alpha_bar_last) / (1. - alpha_bar)
     posterior_log_variance = jnp.log(jnp.clip(posterior_variance, a_min = 1e-20))
 
-    return x0, posterior_mean, posterior_log_variance
+    return posterior_mean, posterior_log_variance
 
 
 # eval step
-def model_predict(state, x, t):
-    variables = {'params': state.params_ema}
-    logits = state.apply_fn(
+def model_predict(state, x, t, ddpm_params, pred_x0, use_ema=True):
+    if use_ema:
+        variables = {'params': state.params_ema}
+    else:
+        variables = {'params': state.params}
+    pred = state.apply_fn(
         variables, x, t)
-    return logits
+    
+    if pred_x0: # if the objective is pred_x0, pred == x0_pred
+        x0_pred = pred
+        noise_pred =  x0_to_noise(pred, x, t, ddpm_params)
+    else:
+        noise_pred = pred
+        x0_pred = noise_to_x0(pred, x, t, ddpm_params)
+    
+    return x0_pred, noise_pred
 
-def ddpm_sample_step(state, rng, x, t, x0, ddpm_params, self_condition=False):
-    # predicted_noise
+
+def ddpm_sample_step(state, rng, x, t, x0_last, ddpm_params, self_condition=False, pred_x0=False):
  
     batched_t = jnp.ones((x.shape[0],), dtype=jnp.int32) * t
     
     if self_condition:
-        v = model_predict(state, jnp.concatenate([x,x0], axis=-1), batched_t) 
+        x0, v = model_predict(state, jnp.concatenate([x,x0_last], axis=-1), batched_t, ddpm_params, pred_x0, use_ema=True) 
     else:
-        v = model_predict(state, x, batched_t)
-       
-    x0, posterior_mean, posterior_log_variance = get_posterior_mean_variance(x, t, v, ddpm_params)
+        x0, v = model_predict(state, x, batched_t,ddpm_params, pred_x0, use_ema=True)
+    
+    # make sure x0 between [-1,1]
+    x0 = jnp.clip(x0, -1., 1.)
+
+    posterior_mean, posterior_log_variance = get_posterior_mean_variance(x, t, x0, v, ddpm_params)
     x = posterior_mean + jnp.exp(0.5 *  posterior_log_variance) * jax.random.normal(rng, x.shape) 
 
     return x, x0
 
 
 def sample_loop(rng, state, shape, p_sample_step, timesteps):
+    
     # shape include the device dimension: (device, per_device_batch_size, H,W,C)
     rng, x_rng = jax.random.split(rng)
     list_x0 = []

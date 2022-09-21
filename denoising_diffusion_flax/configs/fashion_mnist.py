@@ -7,10 +7,10 @@ def get_config():
 
   # wandb
   config.wandb = wandb = ml_collections.ConfigDict()
-  wandb.entity = None # team
-  wandb.project = "ddpm-flax-fashion-mnist"
+  wandb.entity = None # team name, must have already created
+  wandb.project = "ddpm-flax-fashion-mnist" 
   wandb.job_type = "training"
-  wandb.name = None 
+  wandb.name = None # run name
   wandb.log_train = True
   wandb.log_sample = True
   wandb.log_model = True
@@ -42,7 +42,8 @@ def get_config():
   ddpm.timesteps = 1000
   ddpm.p2_loss_weight_gamma = 0. # p2 loss weight, from https://arxiv.org/abs/2204.00227 - 0 is equivalent to weight of 1 across time - 1. is recommended
   ddpm.p2_loss_weight_k = 1
-  ddpm.self_condition = True
+  ddpm.self_condition = False # not tested yet
+  ddpm.pred_x0 = False # by default, the model will predict noise, if True predict x0
 
 
   # data
