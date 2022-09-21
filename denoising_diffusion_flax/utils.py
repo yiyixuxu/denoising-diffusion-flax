@@ -5,6 +5,7 @@ import jax
 import math
 from PIL import Image
 import wandb
+from ml_collections import ConfigDict
 
 
 def cosine_beta_schedule(timesteps):
@@ -132,3 +133,12 @@ def wandb_log_model(workdir, step):
   wandb.run.log_artifact(artifact)
 
 
+def to_wandb_config(d: ConfigDict, parent_key: str = '', sep: str ='.'):
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, ConfigDict):
+            items.extend(to_wandb_config(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)

@@ -353,11 +353,12 @@ def train(config: ml_collections.ConfigDict,
       logdir=workdir, just_logging=jax.process_index() != 0)
     # set up wandb run
   if config.wandb.log_train and jax.process_index() == 0:
+      wandb_config = utils.to_wandb_config(config)
       wandb.init(
             entity=config.wandb.entity,
             project=config.wandb.project,
             job_type=config.wandb.job_type,
-            config=config)
+            config=wandb_config)
       # set default x-axis as 'train/step'
       #wandb.define_metric("*", step_metric="train/step")
 
