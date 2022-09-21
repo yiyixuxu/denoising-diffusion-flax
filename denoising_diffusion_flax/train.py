@@ -126,6 +126,7 @@ def create_model(*, model_cls, half_precision, **kwargs):
 def initialized(key, image_size,image_channel, model):
 
   input_shape = (1, image_size, image_size, image_channel)
+  print(f"tsting initialized input_shape {input_shape}")
   @jax.jit
   def init(*args):
     return model.init(*args)
@@ -266,6 +267,7 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x
             None)
                 
         x_t = jnp.concatenate([x_t, x0], axis=-1)
+        print(f"testing..ploss x_t.shape, {x_t.shape}")
     
     p2_loss_weight = ddpm_params['p2_loss_weight']
 
