@@ -16,7 +16,7 @@ def noise_to_x0(noise, xt, batched_t, ddpm):
 
 
 def x0_to_noise(x0, xt, batched_t, ddpm):
-    assert batched_t.shape[0] == xt.shape[0] == noise.shape[0] # make sure all has batch dimension
+    assert batched_t.shape[0] == xt.shape[0] == x0.shape[0] # make sure all has batch dimension
     sqrt_alpha_bar = ddpm['sqrt_alphas_bar'][batched_t, None, None, None]
     alpha_bar= ddpm['alphas_bar'][batched_t, None, None, None]
     noise = (1. / sqrt_alpha_bar * xt - x0) /jnp.sqrt(1./alpha_bar-1)
