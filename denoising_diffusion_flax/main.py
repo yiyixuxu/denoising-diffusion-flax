@@ -37,8 +37,6 @@ def main(argv):
 
   if FLAGS.mode == "train":
       train.train(FLAGS.config, FLAGS.workdir)
-  elif FLAGS.mode == "sample":
-      sampling.sample(FLAGS.config, FLAGS.workdir)
   else:
       raise ValueError(f"Mode {FLAGS.mode} not recognized.")
 
