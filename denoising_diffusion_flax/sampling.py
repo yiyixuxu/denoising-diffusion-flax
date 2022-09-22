@@ -42,15 +42,18 @@ def get_posterior_mean_variance(img, t, x0, v, ddpm_params):
     return posterior_mean, posterior_log_variance
 
 
-# eval step
-def model_predict(state, x, t, ddpm_params, is_pred_x0, use_ema=True):
+# called by p_loss and ddpm_sample_step - both use pmap
+def model_predict(state, x, x0, t, ddpm_params, self_condition, is_pred_x0, use_ema=True):
     if use_ema:
         variables = {'params': state.params_ema}
     else:
         variables = {'params': state.params}
-    pred = state.apply_fn(
-        variables, x, t)
     
+    if self_condition:
+        pred = state.apply_fn(variables, jnp.concatenate([x, x0],axis=-1), t)
+    else:
+        pred = state.apply_fn(variables, x, t)
+
     if is_pred_x0: # if the objective is is_pred_x0, pred == x0_pred
         x0_pred = pred
         noise_pred =  x0_to_noise(pred, x, t, ddpm_params)
@@ -66,9 +69,9 @@ def ddpm_sample_step(state, rng, x, t, x0_last, ddpm_params, self_condition=Fals
     batched_t = jnp.ones((x.shape[0],), dtype=jnp.int32) * t
     
     if self_condition:
-        x0, v = model_predict(state, jnp.concatenate([x,x0_last], axis=-1), batched_t, ddpm_params, is_pred_x0, use_ema=True) 
+        x0, v = model_predict(state, x, x0_last, batched_t, ddpm_params, self_condition, is_pred_x0, use_ema=True) 
     else:
-        x0, v = model_predict(state, x, batched_t,ddpm_params, is_pred_x0, use_ema=True)
+        x0, v = model_predict(state, x, None, batched_t,ddpm_params, self_condition, is_pred_x0, use_ema=True)
     
     # make sure x0 between [-1,1]
     x0 = jnp.clip(x0, -1., 1.)
