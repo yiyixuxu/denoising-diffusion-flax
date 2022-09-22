@@ -165,7 +165,10 @@ def create_train_state(rng, config: ml_collections.ConfigDict):
   rng, rng_params = jax.random.split(rng)
   image_size = config.data.image_size
   input_dim = config.data.channels * 2 if config.ddpm.self_condition else config.data.channels
+  print(f"create_train_state input_dim: {input_dim}")
   params = initialized(rng_params, image_size, input_dim, model)
+
+  print(jax.tree_map(lambda x: x.shape, params))
 
   tx = create_optimizer(config.optim)
 
