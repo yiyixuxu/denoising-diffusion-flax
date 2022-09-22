@@ -66,8 +66,8 @@ def get_dataset(rng, config):
     dataset_builder.download_and_prepare()
 
     def preprocess_fn(d):
-        img = tf.image.resize_with_crop_or_pad(d['image'], config.data.image_size ,config.data.image_size)
-        img = tf.image.flip_left_right(img)
+        #img = tf.image.resize_with_crop_or_pad(d['image'], config.data.image_size ,config.data.image_size)
+        img = tf.image.flip_left_right(d['image'])
         img= tf.image.convert_image_dtype(img, input_dtype)
         return({'image':img})
     
