@@ -8,7 +8,7 @@ def get_config():
   # wandb
   config.wandb = wandb = ml_collections.ConfigDict()
   wandb.entity = None
-  wandb.project = "ddpm-flax-cifar10"
+  wandb.project = "ddpm-flax-flower102"
   wandb.job_type = "training"
   wandb.name = None 
   wandb.log_train = True
@@ -23,7 +23,7 @@ def get_config():
   training.loss_type = 'l1'
   training.half_precision = False
   training.save_and_sample_every = 1000
-  training.num_sample = 36
+  training.num_sample = 64
 
 
   # ema
@@ -42,29 +42,29 @@ def get_config():
   ddpm.timesteps = 1000
   ddpm.p2_loss_weight_gamma = 0. # p2 loss weight, from https://arxiv.org/abs/2204.00227 - 0 is equivalent to weight of 1 across time - 1. is recommended
   ddpm.p2_loss_weight_k = 1
-  ddpm.self_condition = True # not tested yet
+  ddpm.self_condition = False # not tested yet
   ddpm.pred_x0 = False # by default, the model will predict noise, if True predict x0
 
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.dataset ='cifar10'
-  data.batch_size = 128 * 8
+  data.dataset ='oxford_flowers102'
+  data.batch_size = 516
   data.cache = False
-  data.image_size = 32
+  data.image_size = 128
   data.channels = 3
 
 
   # model
   config.model = model = ml_collections.ConfigDict()
   model.dim = 64
-  model.dim_mults = (1, 2, 4)
+  model.dim_mults = (1, 2, 4, 8)
 
 
   # optim
   config.optim = optim = ml_collections.ConfigDict()
   optim.optimizer = 'Adam'
-  optim.lr = 1e-3
+  optim.lr = 2e-4
   optim.beta1 = 0.9
   optim.beta2 = 0.99
   optim.eps = 1e-8

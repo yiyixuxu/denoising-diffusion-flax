@@ -50,7 +50,6 @@ def model_predict(state, x, x0, t, ddpm_params, self_condition, is_pred_x0, use_
         variables = {'params': state.params}
     
     if self_condition:
-        print(f"model_predict, apply_fn input shape: {jnp.concatenate([x, x0],axis=-1).shape}")
         pred = state.apply_fn(variables, jnp.concatenate([x, x0],axis=-1), t)
     else:
         pred = state.apply_fn(variables, x, t)
