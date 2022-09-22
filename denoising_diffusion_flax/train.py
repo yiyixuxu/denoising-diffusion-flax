@@ -126,6 +126,7 @@ def create_model(*, model_cls, half_precision, **kwargs):
 def initialized(key, image_size,image_channel, model):
 
   input_shape = (1, image_size, image_size, image_channel)
+
   @jax.jit
   def init(*args):
     return model.init(*args)
@@ -255,7 +256,11 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, is_pre
 
         # self-conditioning 
         def estimate_x0(_):
+            
             x0, _ = model_predict(state, jnp.concatenate([x_t, zeros],axis=-1), batched_t, ddpm_params, is_pred_x0, use_ema=False)
+
+            jax.debug.print("estimate_x0 x0.shape: {}", x0.shape)
+
             return x0
 
         x0 = jax.lax.cond(
