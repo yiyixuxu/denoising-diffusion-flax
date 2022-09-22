@@ -126,7 +126,6 @@ def create_model(*, model_cls, half_precision, **kwargs):
 def initialized(key, image_size,image_channel, model):
 
   input_shape = (1, image_size, image_size, image_channel)
-  print(f"tsting initialized input_shape {input_shape}")
   @jax.jit
   def init(*args):
     return model.init(*args)
@@ -226,7 +225,7 @@ def q_sample(x, t, noise, ddpm_params):
 
 
 # train step
-def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x0=False, pmap_axis='batch'):
+def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, is_pred_x0=False, pmap_axis='batch'):
     
     # run the forward diffusion process to generate noisy image x_t at timestep t
     x = batch['image']
@@ -240,8 +239,8 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x
     # sample a noise (input for q_sample)
     rng, noise_rng = jax.random.split(rng)
     noise = jax.random.normal(noise_rng, x.shape)
-    # if pred_x0 == True, the target for loss calculation is x, else noise
-    target = x if pred_x0 else noise
+    # if is_pred_x0 == True, the target for loss calculation is x, else noise
+    target = x if is_pred_x0 else noise
 
     # generate the noisy image (input for denoise model)
     x_t = q_sample(x, batched_t, noise, ddpm_params)
@@ -256,8 +255,7 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x
 
         # self-conditioning 
         def estimate_x0(_):
-            jnp.concatenate([x_t, zeros])
-            x0, _ = model_predict(state, x_t, batched_t, ddpm_params, pred_x0, use_ema=False)
+            x0, _ = model_predict(state, jnp.concatenate([x_t, zeros],axis=-1), batched_t, ddpm_params, is_pred_x0, use_ema=False)
             return x0
 
         x0 = jax.lax.cond(
@@ -267,7 +265,6 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, pred_x
             None)
                 
         x_t = jnp.concatenate([x_t, x0], axis=-1)
-        print(f"testing..ploss x_t.shape, {x_t.shape}")
     
     p2_loss_weight = ddpm_params['p2_loss_weight']
 
@@ -386,7 +383,7 @@ def train(config: ml_collections.ConfigDict,
  
   ddpm_params = utils.get_ddpm_params(config.ddpm)
   ema_decay_fn = create_ema_decay_schedule(config.ema)
-  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn, self_condition=config.ddpm.self_condition, pred_x0=config.ddpm.pred_x0, pmap_axis ='batch')
+  train_step = functools.partial(p_loss, ddpm_params=ddpm_params, loss_fn =loss_fn, self_condition=config.ddpm.self_condition, is_pred_x0=config.ddpm.pred_x0, pmap_axis ='batch')
   p_train_step = jax.pmap(train_step, axis_name = 'batch')
   p_apply_ema = jax.pmap(apply_ema_decay, in_axes=(0, None), axis_name = 'batch')
   p_copy_params_to_ema = jax.pmap(copy_params_to_ema, axis_name='batch')
@@ -394,7 +391,7 @@ def train(config: ml_collections.ConfigDict,
   train_metrics = []
   hooks = []
 
-  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params, self_condition=config.ddpm.self_condition, pred_x0=config.ddpm.pred_x0)
+  sample_step = functools.partial(ddpm_sample_step, ddpm_params=ddpm_params, self_condition=config.ddpm.self_condition, is_pred_x0=config.ddpm.pred_x0)
   p_sample_step = jax.pmap(sample_step, axis_name='batch')
 
   if jax.process_index() == 0:
