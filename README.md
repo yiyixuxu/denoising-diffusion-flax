@@ -89,9 +89,7 @@ To run
 python3 main.py --workdir=./cifar10 --mode=train --config=configs/cifar10.py 
 ```
 
-W&B project page: 
-
-[ddpm-flax-cifar10](https://wandb.ai/yiyixu/ddpm-flax-cifar10?workspace=user-yiyixu)
+W&B project page: [ddpm-flax-cifar10](https://wandb.ai/yiyixu/ddpm-flax-cifar10?workspace=user-yiyixu)
 
 
 ### fashion-mnist
@@ -149,7 +147,7 @@ P2 (perception prioritized) weighting optimizes the weighting scheme of the trai
 
 By default, we do not apply P2 weighting. However you can apply it by change the values of its hyperparameters: `config.ddpm.p2_loss_weight_gamma` and `config.ddpm.p2_loss_weight_k`; the paper recomend use `p2_loss_weight_gamma=1` and `p2_loss_weight_k=1`
 
-read more about P2 weighting in the [paper] (https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
+read more about P2 weighting in the [paper](https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
 
 
 ## Model EMA 
