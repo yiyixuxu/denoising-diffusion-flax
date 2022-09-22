@@ -49,7 +49,7 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.dataset ='oxford_flowers102'
-  data.batch_size = 128
+  data.batch_size = 64
   data.cache = False
   data.image_size = 128
   data.channels = 3
