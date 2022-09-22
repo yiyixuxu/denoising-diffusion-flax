@@ -46,6 +46,18 @@ def l1_loss(logit, target):
 def normalize_to_neg_one_to_one(img):
     return img * 2 - 1
 
+def crop_resize(image, resolution):
+  crop = tf.minimum(tf.shape(image)[0], tf.shape(image)[1])
+  h, w = tf.shape(image)[0], tf.shape(image)[1]
+  image = image[(h - crop) // 2:(h + crop) // 2,
+                (w - crop) // 2:(w + crop) // 2]
+  image = tf.image.resize(
+      image,
+      size=(resolution, resolution),
+      antialias=True,
+      method=tf.image.ResizeMethod.BICUBIC)
+  return tf.cast(image, tf.uint8)
+
 
 def get_dataset(rng, config):
     
@@ -66,8 +78,9 @@ def get_dataset(rng, config):
     dataset_builder.download_and_prepare()
 
     def preprocess_fn(d):
-        #img = tf.image.resize_with_crop_or_pad(d['image'], config.data.image_size ,config.data.image_size)
-        img = tf.image.flip_left_right(d['image'])
+        img = d['image']
+        img = crop_resize(img, config.data.image_size)
+        img = tf.image.flip_left_right(img)
         img= tf.image.convert_image_dtype(img, input_dtype)
         return({'image':img})
     
