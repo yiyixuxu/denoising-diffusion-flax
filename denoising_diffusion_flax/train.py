@@ -245,6 +245,7 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, is_pre
 
     # generate the noisy image (input for denoise model)
     x_t = q_sample(x, batched_t, noise, ddpm_params)
+    print(f"x_t.shape :{x_t.shape}")
     
     # if doing self-conditioning, 50% of the time first estimate x_0 = f(x_t, 0, t) and then use the estimated x_0 for Self-Conditioning
     # we don't backpropagate through the estimated x_0 (exclude from the loss calculation)
@@ -256,9 +257,9 @@ def p_loss(rng, state, batch, ddpm_params, loss_fn, self_condition=False, is_pre
 
         # self-conditioning 
         def estimate_x0(_):
-            
-            x0, _ = model_predict(state, jnp.concatenate([x_t, zeros],axis=-1), batched_t, ddpm_params, is_pred_x0, use_ema=False)
 
+            x0, _ = model_predict(state, jnp.concatenate([x_t, zeros],axis=-1), batched_t, ddpm_params, is_pred_x0, use_ema=False)
+            print(f"x0.shape :{x0.shape}")
             jax.debug.print("estimate_x0 x0.shape: {}", x0.shape)
 
             return x0
