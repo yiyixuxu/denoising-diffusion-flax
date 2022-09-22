@@ -83,7 +83,7 @@ python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_
 
 ### cifar10
 
-To re-produce
+To run
 
 ```
 python3 main.py --workdir=./cifar10 --mode=train --config=configs/cifar10.py 
@@ -96,7 +96,7 @@ W&B project page:
 
 ### fashion-mnist
 
-To re-produce
+To run
 
 ```
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py 
@@ -107,7 +107,7 @@ W&B project page:
 
 ### oxford_flowers102
 
-To re-produce
+To run
 ```
 python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py 
 ```
@@ -115,13 +115,13 @@ python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py
 W&B project page: 
 [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
-#### dataset 
+## dataset 
 
 the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name. You can update the field in configuration file directly or pass `--config.data.dataset=your_dataset_name` on command line to override it
 
 you can also select different batch size and image size for your data. See more details on `config.data` in the example configuration files under `configs/` folder
 
-#### W&B Logging
+## W&B Logging
 
 It use Weights and Bias logging by default, if you don't already have an W&B acccount, you can sign up [here](https://wandb.ai/signup) - you will also be given option later to create an account when you run the script on comand line 
 
@@ -133,17 +133,17 @@ python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_
 
 you can also choose to log generated sample and model checkpoints, see more details on `config.wandb` in the example configuration files under `configs/` folder
 
-##### predict x0
+## predict x0
 
 By default, we train our model to predict noise by modifying its parameterization, if you want to predict `x_0` directly from `x_t`, set `config.ddpm.pred_x0=True`; The authors of DDPM paper claimed that they it lead to worse sample quality in their experiments 
 
-#### self-conditioning
+## self-conditioning
 
 Self-Conditioning is a useful technique for improving diffusion models. In a typical diffusion sampling process, the model iteratively predict `x0` in order to gradually denoise the image, and the `x0` estimated from previous step is discard in the new step; with self-conditioning, the model will also take previously generated samples as input; read more about the technique in the paper [Analog Bits: Generating Discrete Data using Diffusion Models with Self-Conditioning](https://arxiv.org/abs/2208.04202)
 
 to apply self-conditioning technique, set `config.ddpm.self_condition=True`;
 
-#### p2 loss weight
+## p2 loss weight
 
 P2 (perception prioritized) weighting optimizes the weighting scheme of the training objective function to improve sample quality. It encourages the diffusion model to focus on recovering signals from highly corrupted data, where the model learns global and perceptually rich concepts. 
 
@@ -152,7 +152,7 @@ By default, we do not apply P2 weighting. However you can apply it by change the
 read more about P2 weighting in the [paper] (https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
 
 
-#### model ema 
+## model ema 
 
 By default, we will keep track of an EMA version of the model and use it to generate samples. You can find the list of hyperparameters for ema from `config.ema`
 
