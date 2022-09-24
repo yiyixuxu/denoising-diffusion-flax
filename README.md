@@ -139,14 +139,14 @@ python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_
 
 ### Dataset 
 
-the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name.
+the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name. You can find a list of ready-to-use dataset [here](tensorflow dataset name https://www.tensorflow.org/datasets/catalog/overview)
 
 you can also select different batch size and image size for your data. see below the list of hyperparameters for data; If you are using TPU with 8 devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
 
 ```
-data.dataset
-data.batch_size
-data.cache
+data.dataset           
+data.batch_size              
+data.cache                   
 data.image_size
 data.channels
 ```
@@ -175,7 +175,7 @@ You can find below list of hyperparameters for W&B logging in config file
 
 `wandb.entity`, `wandb.project`, `wandb.job_type` and `wandb.name` is used to initialize the wandb run; `wandb.project` is required field because we will create a project with that name to send the run to; all the other fields can be left as None
 
-read more about how to set up these values in Weights & Biase documentation about `wandb.init()` here https://docs.wandb.ai/ref/python/init
+read more about how to set up these values in Weights & Biase documentation about `wandb.init()` [here](https://docs.wandb.ai/ref/python/init)
 
 by default, we will log training metrics (`wandb.log_train = True`), generated samples (`wandb.log_sample = True`), as well as the final model checkpoint (`wandb.log_model = True`);
 
