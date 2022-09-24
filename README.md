@@ -5,6 +5,8 @@ This implementation is based on [lucidrains](https://github.com/lucidrains)'s [d
 
 I will keep adding new research findings to this repo, let me know if you have any suggestions! 
 
+on going at 85k (self-conditioning + P2 weighting)
+<img src="images/sample.png"></img>
 
 ## Contents
 
