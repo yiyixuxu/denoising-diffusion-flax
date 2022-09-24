@@ -3,6 +3,17 @@
 
 This implementation is based on [lucidrains](https://github.com/lucidrains)'s [denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch), where he implemented the original DDPM model proposed from paper [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239), as well as latest research findings
 
+I will keep adding new research findings to this repo, let me know if you have any suggestions! 
+
+
+## Contents
+
+- [Running locally](https://github.com/yiyixuxu/denoising-diffusion-flax/edit/main/README.md#running-locally) 
+- [Using Google Cloud TPU](#google-cloud-tpu)
+- [Examples](#examples)
+- [Pre-trained Models](lLoad-a-pre-trained-model-from-W&B-artifact)
+- [Train your own model](#train-your-own-model)
+
 
 ### Running locally
 
@@ -93,6 +104,7 @@ python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py
 W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
 
+
 ## Load a pre-trained model from W&B artifact
 
 ```
@@ -132,14 +144,14 @@ python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_
 
 the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name.
 
-you can also select different batch size and image size for your data. See more details on `config.data` in the example configuration files under `configs/` folder
+you can also select different batch size and image size for your data. see below the list of hyperparameters for data; If you are using TPU with 8 devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
 
 ```
-data.dataset ='oxford_flowers102'
-data.batch_size = 64
-data.cache = False
-data.image_size = 128
-data.channels = 3
+data.dataset
+data.batch_size
+data.cache
+data.image_size
+data.channels
 ```
 
 ### W&B Logging
@@ -214,7 +226,6 @@ By default, we will keep track of an exponential moving average version of the m
 `ema.inv_gamma` and `ema.power` is used to calculate `ema_decay` rate for each training step. i.e. `ema_decay = (1 + steps / config.inv_gamma) ** - config.power `; `ema.min_value` and `ema.beta` determine the minimum and maximum decay rate 
 
 by default, we start to average the parameters after `100` steps (`ema.update_after_step = 100`) and we update the average every `10` steps (`ema.update_every = 10`) 
-
 
 
 
