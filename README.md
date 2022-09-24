@@ -141,7 +141,7 @@ python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_
 
 the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name. You can find a list of ready-to-use dataset [here](tensorflow dataset name https://www.tensorflow.org/datasets/catalog/overview)
 
-you can also select different batch size and image size for your data. see below the list of hyperparameters for data; If you are using TPU with 8 devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
+See below the list of hyperparameters for data processing; If you are using TPU with 8 devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
 
 ```
 data.dataset           
