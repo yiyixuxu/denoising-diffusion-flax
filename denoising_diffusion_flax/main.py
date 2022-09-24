@@ -21,10 +21,11 @@ config_flags.DEFINE_config_file(
     lock_config=True)
 
 flags.DEFINE_string("workdir", None, "Work unit directory.")
+flags.DEFINE_string("wandb_artifact", None, "the wandb artifact reference for logged model")
 flags.DEFINE_string("mode", "train", "Running mode: train or sample")
 
 def main(argv):
-  if len(argv) > 2:
+  if len(argv) > 3:
     raise app.UsageError('Too many command-line arguments.')
 
   # Hide any GPUs from TensorFlow. Otherwise TF might reserve memory and make
@@ -36,7 +37,7 @@ def main(argv):
 
 
   if FLAGS.mode == "train":
-      train.train(FLAGS.config, FLAGS.workdir)
+      train.train(FLAGS.config, FLAGS.workdir, FLAGS.wandb_artifact)
   else:
       raise ValueError(f"Mode {FLAGS.mode} not recognized.")
 

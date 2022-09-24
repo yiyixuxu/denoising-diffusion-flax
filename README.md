@@ -26,10 +26,13 @@ python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.
 
 ### Google Cloud TPU
 
+If you're new to Jax/Flax ecosystem, you can apply for TPU free trial here https://sites.research.google/trc/about/
+
 See below for commands to set up a single VM with 8 TPUs attached
 (`--accelerator-type v3-8`). For more details about how to set up and
 use TPUs, refer to Cloud docs for
 [single VM setup](https://cloud.google.com/tpu/docs/jax-quickstart-tpu-vm)(https://cloud.google.com/tpu/docs/jax-quickstart-tpu-vm).
+
 
 First create a single TPUv3-8 VM and connect to it:
 
@@ -79,7 +82,7 @@ And finally start the training:
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py 
 ```
 
-## Examples
+## Examples (using default setting)
 
 ### cifar10
 
@@ -99,9 +102,7 @@ To run
 ```
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py 
 ```
-W&B project page: 
-
-[ddpm-flax-fashion-mnist](https://wandb.ai/yiyixu/ddpm-flax-fashion-mnist?workspace=user-yiyixu)
+W&B project page:  [ddpm-flax-fashion-mnist](https://wandb.ai/yiyixu/ddpm-flax-fashion-mnist?workspace=user-yiyixu)
 
 ### oxford_flowers102
 
@@ -110,8 +111,7 @@ To run
 python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py 
 ```
 
-W&B project page: 
-[ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
+W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
 ## Dataset 
 
@@ -137,7 +137,9 @@ By default, we train our model to predict noise by modifying its parameterizatio
 
 ## Self-Conditioning
 
-Self-Conditioning is a useful technique for improving diffusion models. In a typical diffusion sampling process, the model iteratively predict `x0` in order to gradually denoise the image, and the `x0` estimated from previous step is discard in the new step; with self-conditioning, the model will also take previously generated samples as input; read more about the technique in the paper [Analog Bits: Generating Discrete Data using Diffusion Models with Self-Conditioning](https://arxiv.org/abs/2208.04202)
+Self-Conditioning is a useful technique for improving diffusion models. In a typical diffusion sampling process, the model iteratively predict `x0` in order to gradually denoise the image, and the `x0` estimated from previous step is discard in the new step; with self-conditioning, the model will also take previously generated samples as input.
+
+You read more about the technique in the paper [Analog Bits: Generating Discrete Data using Diffusion Models with Self-Conditioning](https://arxiv.org/abs/2208.04202)
 
 to apply self-conditioning technique, set `config.ddpm.self_condition=True`;
 
@@ -145,9 +147,9 @@ to apply self-conditioning technique, set `config.ddpm.self_condition=True`;
 
 P2 (perception prioritized) weighting optimizes the weighting scheme of the training objective function to improve sample quality. It encourages the diffusion model to focus on recovering signals from highly corrupted data, where the model learns global and perceptually rich concepts. 
 
-By default, we do not apply P2 weighting. However you can apply it by change the values of its hyperparameters: `config.ddpm.p2_loss_weight_gamma` and `config.ddpm.p2_loss_weight_k`; the paper recomend use `p2_loss_weight_gamma=1` and `p2_loss_weight_k=1`
+You can read more about P2 weighting in the [paper](https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
 
-read more about P2 weighting in the [paper](https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
+By default, we do not apply P2 weighting. However you can apply it by change the values of its hyperparameters: `config.ddpm.p2_loss_weight_gamma` and `config.ddpm.p2_loss_weight_k`; the paper recomend use `p2_loss_weight_gamma=1` and `p2_loss_weight_k=1`
 
 
 ## Model EMA 
