@@ -1,6 +1,5 @@
-# denoising-diffusion-flax
 
-Denoising Diffusion Probabilistic Model in Flax 
+# Denoising Diffusion Probabilistic Model in Flax 
 
 This implementation is based on [lucidrains](https://github.com/lucidrains)'s [denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch), where he implemented the original DDPM model proposed from paper [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239), as well as latest research findings
 
@@ -14,7 +13,7 @@ python main.py --workdir=./fashion_mnist_cpu --mode=train --config=configs/fashi
 
 ### Google Cloud TPU
 
-If you're new to Jax/Flax ecosystem, you can apply for TPU free trial here https://sites.research.google/trc/about/
+If you're new to Jax/Flax ecosystem, you can apply to TPU for free for your research project here https://sites.research.google/trc/about/
 
 See below for commands to set up a single VM with 8 TPUs attached
 (`--accelerator-type v3-8`). For more details about how to set up and
@@ -24,10 +23,8 @@ use TPUs, refer to Cloud docs for
 
 First create a single TPUv3-8 VM and connect to it:
 
-(you can get a list of zones where your tpu type is available [here](https://cloud.google.com/tpu/docs/regions-zones)
-
 ```
-ZONE=us-central1-b
+ZONE=europe-west4-a
 TPU_TYPE=v3-8
 VM_NAME=ddpm
 
@@ -45,7 +42,7 @@ When connected install JAX:
 pip install "jax[tpu]>=0.2.16" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 ```
 
-Then install ddpm-flax and required libraries
+Then install denoising-diffusion-flax and required libraries
 
 ```
 git clone https://github.com/yiyixuxu/denoising-diffusion-flax.git
@@ -63,18 +60,15 @@ tmux new -s ddpm
 
 ```
 
-And finally start the training:
-
+And finally start the training, to train a model on fashion-mnist dataset with default setting, run
 
 ```
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py 
 ```
 
-## Examples (using default setting)
+## Examples
 
 ### cifar10
-
-To run
 
 ```
 python3 main.py --workdir=./cifar10 --mode=train --config=configs/cifar10.py 
@@ -85,8 +79,6 @@ W&B project page: [ddpm-flax-cifar10](https://wandb.ai/yiyixu/ddpm-flax-cifar10?
 
 ### fashion-mnist
 
-To run
-
 ```
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py 
 ```
@@ -94,7 +86,6 @@ W&B project page:  [ddpm-flax-fashion-mnist](https://wandb.ai/yiyixu/ddpm-flax-f
 
 ### oxford_flowers102
 
-To run
 ```
 python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py 
 ```
@@ -102,18 +93,18 @@ python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py
 W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
 
-### load a pre-trained model from W&B artifact
+## Load a pre-trained model from W&B artifact
 
 ```
 python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0 --config=configs/fashion_mnist_cpu.py 
 ```
 
 
-# How to train your own model
+## Train your own model
 
 You can customize your training either by update the config file or overriding parameters on the command line
 
-## Overriding parameters on the command line
+#### Overriding parameters on the command line
 
 Specify a hyperparameter configuration by the means of setting `--config` flag.
 Configuration flag is defined using
@@ -126,7 +117,7 @@ python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.
 --config.training.num_train_steps=100
 ```
 
-## Update the config file 
+#### Update the config file 
 
 You can find example configuration files under `configs/` folder - you can create your own configuration file and run 
 
@@ -135,6 +126,7 @@ python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_
 
 ```
 
+### Configuration
 
 ### Dataset 
 
