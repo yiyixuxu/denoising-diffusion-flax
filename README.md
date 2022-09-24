@@ -24,6 +24,12 @@ python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.
 --config.training.num_train_steps=100
 ```
 
+#### load a pre-trained model from W&B artifact
+
+```
+python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0 --config=configs/fashion_mnist_cpu.py 
+```
+
 ### Google Cloud TPU
 
 If you're new to Jax/Flax ecosystem, you can apply for TPU free trial here https://sites.research.google/trc/about/
