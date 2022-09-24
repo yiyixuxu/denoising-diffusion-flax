@@ -61,14 +61,12 @@ cd denoising-diffusion-flax/denoising_diffusion_flax
 pip install einops
 pip install wandb
 pip install --upgrade clu
-
  ```
 
 create a tmux session
 
 ```
 tmux new -s ddpm
-
 ```
 
 And finally start the training, to train a model on fashion-mnist dataset with default setting, run
@@ -135,7 +133,6 @@ You can find example configuration files under `configs/` folder - you can creat
 
 ```
 python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_config_file.py 
-
 ```
 
 ### Configuration
