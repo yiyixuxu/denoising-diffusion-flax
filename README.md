@@ -22,7 +22,7 @@ __generated sample from oxford102 flower dataset__
 - [Running locally](https://github.com/yiyixuxu/denoising-diffusion-flax/edit/main/README.md#running-locally) 
 - [Using Google Cloud TPU](#google-cloud-tpu)
 - [Examples](#examples)
-- [Pre-trained Models](lLoad-a-pre-trained-model-from-W&B-artifact)
+- [pre-trained model](load-a-model-checkpoint-from-W&B)
 - [Train your own model](#train-your-own-model)
 
 
@@ -88,6 +88,8 @@ python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_
 
 ## Examples
 
+All examples use read-to-use tensorflow dataset, and have the training process and model checkpoint available on W&B so it is very easy to reproduce
+
 ### cifar10
 
 ```
@@ -104,17 +106,32 @@ python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_
 ```
 W&B project page:  [ddpm-flax-fashion-mnist](https://wandb.ai/yiyixu/ddpm-flax-fashion-mnist?workspace=user-yiyixu)
 
-### oxford_flowers102
+### oxford_flowers102 (on-going experiments)
+
+- run the model in default setting 
 
 ```
 python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py 
+```
+
+- run the model with p2-weighting 
+
+```
+python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py --config.ddpm.p2_loss_weight_gamma=1.
+```
+
+- with self-condition
+```
+python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py --config.ddpm.self_condition=True
 ```
 
 W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
 
 
-## Load a pre-trained model from W&B artifact
+## Load a model checkpoint from W&B
+
+By default, we log our model as W&B artifact at end of the training, you can restore your checkpoint from wandb artifact directly by pass the `--wandb_artifact` argument on commend line; In the example below, we will load our model checkpint from the wandb artifact `yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0` and continue our training from there 
 
 ```
 python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0 --config=configs/fashion_mnist_cpu.py 
@@ -123,7 +140,17 @@ python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiy
 
 ## Train your own model
 
-You can customize your training either by update the config file or overriding parameters on the command line
+You can customize your training either by __update the config file__ or __overriding parameters on the command line__
+
+
+#### Update the config file 
+
+You can find example configuration files under `configs/` folder - you can create your own configuration file and run 
+
+```
+python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_config_file.py 
+```
+
 
 #### Overriding parameters on the command line
 
@@ -138,21 +165,13 @@ python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.
 --config.training.num_train_steps=100
 ```
 
-#### Update the config file 
-
-You can find example configuration files under `configs/` folder - you can create your own configuration file and run 
-
-```
-python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_config_file.py 
-```
-
 ### Configuration
 
 ### Dataset 
 
 the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name. You can find a list of ready-to-use dataset [here](tensorflow dataset name https://www.tensorflow.org/datasets/catalog/overview)
 
-See below the list of hyperparameters for data processing; If you are using TPU with 8 devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
+See below the list of hyperparameters for data processing; If you are using TPU with `8` devices, make sure your `batch_size` is dividable by `8`; If you set `data.image_size` to a different size than your actual image, it will be resized, so make sure to set the size properly
 
 ```
 data.dataset           
