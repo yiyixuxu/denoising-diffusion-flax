@@ -12,6 +12,11 @@ __generated sample from oxford102 flower dataset__
 <img src="images/sample.png"></img>
 *on going at 85k(self-conditioning + P2 weighting)*
 
+## To-do list
+- [ ] write a wandb report about the p2-weighting, self-doncitioning and predict_from_x0 
+- [ ] implement gradient accumulation
+- [ ] implement ddim 
+
 ## Contents
 
 - [Running locally](https://github.com/yiyixuxu/denoising-diffusion-flax/edit/main/README.md#running-locally) 
