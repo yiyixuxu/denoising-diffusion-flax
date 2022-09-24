@@ -341,6 +341,12 @@ def apply_ema_decay(state, ema_decay):
     return state
 
 
+def load_wandb_model(state, workdir, wandb_artifact):
+    artifact = wandb.run.use_artifact(wandb_artifact, type='ddpm_model')
+    artifact_dir = artifact.download(workdir)
+    checkpoints.restore_checkpoint(artifact_dir, state)
+
+
 def restore_checkpoint(state, workdir):
   return checkpoints.restore_checkpoint(workdir, state)
 
@@ -354,7 +360,8 @@ def save_checkpoint(state, workdir):
 
 
 def train(config: ml_collections.ConfigDict, 
-          workdir: str) -> TrainState:
+          workdir: str,
+          wandb_artifact: str = None) -> TrainState:
   """Execute model training loop.
 
   Args:
@@ -389,7 +396,11 @@ def train(config: ml_collections.ConfigDict,
   
   rng, state_rng = jax.random.split(rng)
   state = create_train_state(state_rng, config)
-  state = restore_checkpoint(state, workdir)
+  if wandb_artifact is not None:
+      logging.info('loading model from wandb: {wandb_artifact}')
+      state = load_wandb_model(state, workdir, wandb_artifact)
+  else:
+      state = restore_checkpoint(state, workdir)
   # step_offset > 0 if restarting from checkpoint
   step_offset = int(state.step)
   state = jax_utils.replicate(state)

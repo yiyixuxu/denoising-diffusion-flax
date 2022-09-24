@@ -126,11 +126,9 @@ def wandb_log_image(samples_array, step):
     wandb.log({'samples':sample_images })
 
 def wandb_log_model(workdir, step):
-  artifact = wandb.Artifact(
-                    name=f"model-{wandb.run.id}",
-                    type="ddpm_model")
-  artifact.add_file( f"{workdir}/checkpoint_{step}")
-  wandb.run.log_artifact(artifact)
+    artifact = wandb.Artifact(name=f"model-{wandb.run.id}", type="ddpm_model")
+    artifact.add_file( f"{workdir}/checkpoint_{step}")
+    wandb.run.log_artifact(artifact)
 
 
 def to_wandb_config(d: ConfigDict, parent_key: str = '', sep: str ='.'):
