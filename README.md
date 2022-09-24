@@ -11,24 +11,6 @@ This implementation is based on [lucidrains](https://github.com/lucidrains)'s [d
 python main.py --workdir=./fashion_mnist_cpu --mode=train --config=configs/fashion_mnist_cpu.py 
 ```
 
-#### Overriding parameters on the command line
-
-Specify a hyperparameter configuration by the means of setting `--config` flag.
-Configuration flag is defined using
-[config_flags](https://github.com/google/ml_collections/tree/master#config-flags).
-`config_flags` allows overriding configuration fields. This can be done as
-follows:
-
-```shell
-python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.py  \
---config.training.num_train_steps=100
-```
-
-#### load a pre-trained model from W&B artifact
-
-```
-python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0 --config=configs/fashion_mnist_cpu.py 
-```
 
 ### Google Cloud TPU
 
@@ -119,15 +101,58 @@ python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py
 
 W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
 
-## Dataset 
 
-the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name. You can update the field in configuration file directly or pass `--config.data.dataset=your_dataset_name` on command line to override it
+### load a pre-trained model from W&B artifact
+
+```
+python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiyixu/ddpm-flax-fashion-mnist/model-3j8xvqwf:v0 --config=configs/fashion_mnist_cpu.py 
+```
+
+
+# How to train your own model
+
+You can customize your training either by update the config file or overriding parameters on the command line
+
+## Overriding parameters on the command line
+
+Specify a hyperparameter configuration by the means of setting `--config` flag.
+Configuration flag is defined using
+[config_flags](https://github.com/google/ml_collections/tree/master#config-flags).
+`config_flags` allows overriding configuration fields. This can be done as
+follows:
+
+```shell
+python main.py --workdir=./fashion_mnist_cpu --config=configs/fashion_mnist_cpu.py  \
+--config.training.num_train_steps=100
+```
+
+## Update the config file 
+
+You can find example configuration files under `configs/` folder - you can create your own configuration file and run 
+
+```
+python3 main.py --workdir=./your_test_folder --mode=train --config=configs/your_config_file.py 
+
+```
+
+
+### Dataset 
+
+the script can run directly on any TensorFlow dataset, just set the configuration field `data.dataset` to the desired dataset name.
 
 you can also select different batch size and image size for your data. See more details on `config.data` in the example configuration files under `configs/` folder
 
-## W&B Logging
+```
+data.dataset ='oxford_flowers102'
+data.batch_size = 64
+data.cache = False
+data.image_size = 128
+data.channels = 3
+```
 
-It use Weights and Bias logging by default, if you don't already have an W&B acccount, you can sign up [here](https://wandb.ai/signup) - you will also be given option later to create an account when you run the script on comand line 
+### W&B Logging
+
+It use Weights and Bias logging by default, if you don't already have an W&B acccount, you can sign up [here](https://wandb.ai/signup) - you will also be given option to create an account when you run the script on comand line 
 
 To disable W&B logging, you can override with `--config` flag on command line
 
@@ -135,32 +160,70 @@ To disable W&B logging, you can override with `--config` flag on command line
 python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_mnist.py --config.wandb.log_train=False
 ```
 
-you can also choose to log generated sample and model checkpoints, see more details on `config.wandb` in the example configuration files under `configs/` folder
+You can find below list of hyperparameters for W&B logging in config file
 
-## Predict x0
+```
+  wandb.entity = None
+  wandb.project = "ddpm-flax-flower102"
+  wandb.job_type = "training"
+  wandb.name = None 
+  wandb.log_train = True
+  wandb.log_sample = True
+  wandb.log_model = True
+```
 
-By default, we train our model to predict noise by modifying its parameterization, if you want to predict `x_0` directly from `x_t`, set `config.ddpm.pred_x0=True`; The authors of DDPM paper claimed that they it lead to worse sample quality in their experiments 
+`wandb.entity`, `wandb.project`, `wandb.job_type` and `wandb.name` is used to initialize the wandb run; `wandb.project` is required field because we will create a project with that name to send the run to; all the other fields can be left as None
 
-## Self-Conditioning
+read more about how to set up these values in Weights & Biase documentation about `wandb.init()` here https://docs.wandb.ai/ref/python/init
+
+by default, we will log training metrics (`wandb.log_train = True`), generated samples (`wandb.log_sample = True`), as well as the final model checkpoint (`wandb.log_model = True`);
+
+
+### Predict x0
+
+By default, we train our model to predict noise by modifying its parameterization, if you want to predict `x_0` directly from `x_t`, set `config.ddpm.pred_x0=True`; 
+
+The authors of DDPM paper claimed that they it lead to worse sample quality in their experiments 
+
+
+### Self-Conditioning
 
 Self-Conditioning is a useful technique for improving diffusion models. In a typical diffusion sampling process, the model iteratively predict `x0` in order to gradually denoise the image, and the `x0` estimated from previous step is discard in the new step; with self-conditioning, the model will also take previously generated samples as input.
 
 You read more about the technique in the paper [Analog Bits: Generating Discrete Data using Diffusion Models with Self-Conditioning](https://arxiv.org/abs/2208.04202)
 
-to apply self-conditioning technique, set `config.ddpm.self_condition=True`;
-
-## P2 Weighting
-
-P2 (perception prioritized) weighting optimizes the weighting scheme of the training objective function to improve sample quality. It encourages the diffusion model to focus on recovering signals from highly corrupted data, where the model learns global and perceptually rich concepts. 
-
-You can read more about P2 weighting in the [paper](https://arxiv.org/abs/2204.00227) and check out the git [repo](https://github.com/jychoi118/P2-weighting)
-
-By default, we do not apply P2 weighting. However you can apply it by change the values of its hyperparameters: `config.ddpm.p2_loss_weight_gamma` and `config.ddpm.p2_loss_weight_k`; the paper recomend use `p2_loss_weight_gamma=1` and `p2_loss_weight_k=1`
+By default, we do not apply self-conditioning; If you wish to apply self-conditioning, set `config.ddpm.self_condition=True`;
 
 
-## Model EMA 
+### P2 Weighting
 
-By default, we will keep track of an EMA version of the model and use it to generate samples. You can find the list of hyperparameters for ema from `config.ema`
+__P2 (perception prioritized) weighting__ optimizes the weighting scheme of the training objective function to improve sample quality. It encourages the diffusion model to focus on recovering signals from highly corrupted data, where the model learns global and perceptually rich concepts. 
+
+You can read more about P2 weighting in the [paper](https://arxiv.org/abs/2204.00227) and check out the github [repo](https://github.com/jychoi118/P2-weighting)
+
+By default, we do not apply P2 weighting. However you can apply it by change the values of p2 hyperparameters in config file, i.e. `config.ddpm.p2_loss_weight_gamma` and `config.ddpm.p2_loss_weight_k`; 
+
+the paper recomend use `p2_loss_weight_gamma=1` and `p2_loss_weight_k=1`
+
+
+### Model EMA 
+
+By default, we will keep track of an exponential moving average version of the model and use it to generate samples. You can find the list of hyperparameters with default values for ema calculation in config file `config.ema`
+
+```
+  ema.beta = 0.995
+  ema.update_every = 10
+  ema.update_after_step = 100
+  ema.inv_gamma = 1.0
+  ema.power = 2 / 3
+  ema.min_value = 0.0
+```
+
+`ema.inv_gamma` and `ema.power` is used to calculate `ema_decay` rate for each training step. i.e. `ema_decay = (1 + steps / config.inv_gamma) ** - config.power `; `ema.min_value` and `ema.beta` determine the minimum and maximum decay rate 
+
+by default, we start to average the parameters after `100` steps (`ema.update_after_step = 100`) and we update the average every `10` steps (`ema.update_every = 10`) 
+
+
 
 
 
