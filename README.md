@@ -52,7 +52,7 @@ python main.py --workdir=./fashion_mnist_cpu --mode=train --config=configs/fashi
 ### Google Cloud TPU
 
 If you're new to Jax/Flax ecosystem, you can apply to TPU for free for your research project here https://sites.research.google/trc/about/
-This project is enabled by TRC program! 
+(This project is enabled by TRC program. Thank you google!)  
 
 See below for commands to set up a single VM with 8 TPUs attached
 (`--accelerator-type v3-8`). For more details about how to set up and
