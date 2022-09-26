@@ -123,23 +123,12 @@ python3 main.py --workdir=./fashion-mnist --mode=train --config=configs/fashion_
 ```
 W&B project page:  [ddpm-flax-fashion-mnist](https://wandb.ai/yiyixu/ddpm-flax-fashion-mnist?workspace=user-yiyixu)
 
-### oxford_flowers102 (on-going experiments)
+### oxford_flowers102
 
-- run the model in default setting 
 
-```
-python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py 
-```
-
-- run the model with p2-weighting 
 
 ```
-python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py --config.ddpm.p2_loss_weight_gamma=1.
-```
-
-- with self-condition
-```
-python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102.py --config.ddpm.self_condition=True
+python3 main.py --workdir=./flower102--mode=train --config=configs/oxford102_p2_selfcondition.py 
 ```
 
 W&B project page: [ddpm-flax-flower102](https://wandb.ai/yiyixu/ddpm-flax-flower102?workspace=user-yiyixu)
