@@ -13,7 +13,7 @@ __generated sample from oxford102 flower dataset__
 *on going at 85k(self-conditioning + P2 weighting)*
 
 ## To-do list
-- [ ] write a wandb report about the p2-weighting, self-doncitioning and predict_from_x0 
+- [ ] write a wandb report about the p2-weighting, self-concitioning and predict_from_x0 
 - [ ] implement gradient accumulation
 - [ ] implement ddim 
 
