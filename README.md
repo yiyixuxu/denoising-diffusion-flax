@@ -5,15 +5,31 @@ This implementation is based on [lucidrains](https://github.com/lucidrains)'s [d
 
 I will keep adding new research findings to this repo, let me know if you have any suggestions! 
 
+## end-to-end training on colab notebook 
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/yiyixuxu/denoising-diffusion-flax/blob/main/ddpm_flax_oxford102_end_to_end.ipynb)
 
 
-__generated sample from oxford102 flower dataset__
+You can run this code and even modify it directly in Google Colab, no installation required:
 
-<img src="images/sample.png"></img>
+[https://github.com/yiyixuxu/denoising-diffusion-flax/blob/main/ddpm_flax_oxford102_end_to_end.ipynb]
+
+The Colab also demonstrates how to configure your own training and load pre-trained checkpoint to generate samples on your own!
+
+## generated sample from oxford102 flower dataset
+
 *on going at 85k(self-conditioning + P2 weighting)*
+<img src="images/27k.png"></img>
+
+
+*on going at 85k(self-conditioning + P2 weighting)*
+<img src="images/sample.png"></img>
+
+*300k*
+<img src="images/300k.png"></img>
 
 ## To-do list
-- [ ] write a wandb report about the p2-weighting, self-concitioning and predict_from_x0 
+- [ ] write a wandb report about the p2-weighting, self-conditioning and predict_from_x0 
 - [ ] implement gradient accumulation
 - [ ] implement ddim 
 
@@ -36,6 +52,7 @@ python main.py --workdir=./fashion_mnist_cpu --mode=train --config=configs/fashi
 ### Google Cloud TPU
 
 If you're new to Jax/Flax ecosystem, you can apply to TPU for free for your research project here https://sites.research.google/trc/about/
+This project is enabled by TRC program! 
 
 See below for commands to set up a single VM with 8 TPUs attached
 (`--accelerator-type v3-8`). For more details about how to set up and
@@ -141,6 +158,10 @@ python main.py --workdir=./fashion_mnist_wandb --mode=train --wandb_artifact=yiy
 ## Train your own model
 
 You can customize your training either by __update the config file__ or __overriding parameters on the command line__
+
+see more details on how to configure your training from the [notebook](https://github.com/yiyixuxu/denoising-diffusion-flax/blob/main/ddpm_flax_oxford102_end_to_end.ipynb)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/yiyixuxu/denoising-diffusion-flax/blob/main/ddpm_flax_oxford102_end_to_end.ipynb)
 
 
 #### Update the config file 
