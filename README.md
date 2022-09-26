@@ -25,7 +25,7 @@ The Colab also demonstrates how to configure your own training and load pre-trai
 *on going at 85k steps (self-conditioning + P2 weighting)*
 <img src="images/sample.png"></img>
 
-*300k steps! *
+*300k steps!*
 <img src="images/300k.png"></img>
 
 ## To-do list
