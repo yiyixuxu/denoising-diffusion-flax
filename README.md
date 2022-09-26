@@ -18,14 +18,14 @@ The Colab also demonstrates how to configure your own training and load pre-trai
 
 ## generated sample from oxford102 flower dataset
 
-*on going at 27k(self-conditioning + P2 weighting)*
+*on going at 27k steps (self-conditioning + P2 weighting)*
 <img src="images/27k.png"></img>
 
 
-*on going at 85k(self-conditioning + P2 weighting)*
+*on going at 85k steps (self-conditioning + P2 weighting)*
 <img src="images/sample.png"></img>
 
-*300k*
+*300k steps! *
 <img src="images/300k.png"></img>
 
 ## To-do list
