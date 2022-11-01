@@ -1,26 +1,3 @@
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
-
-## Note : Editing in your Google Drive, changes will persist.
-#############################################################
 
 import flax.linen as nn
 from typing import Any, Callable, Sequence, Tuple, List, Optional,Union
